@@ -28,7 +28,15 @@ def var_name(name):
 config={
     'downstairsController': {}
 }
+
+# when the scenes change and reload
+# we also need to reload their config file
+# in order to reflect their changes
+# TODO: re-register all the triggers based on their entities
+@event_trigger('SCENE_RELOADED')
 def loadConfig():
+    logMsg(message='loading config...')
+
     # load all the scenes configurations
     # because it is the only way to get the state of each entity, in each scene
     # otherwise, we only get the list of entities of a scene...
@@ -105,11 +113,9 @@ def loadConfig():
             if entity[0] not in config['downstairsController']['triggerEntities']:
                 config['downstairsController']['triggerEntities'].append(entity[0])
                 
+    logMsg(message='config loaded!')
 
 loadConfig()
-
-a=config['downstairsController']['triggerEntities']
-logMsg(message=f'triggerEntities:  {a}')
 
 # returns either the brightness integer or
 #  None, if not supported and when the state is off
@@ -142,50 +148,6 @@ def isSceneActive(scenes, sceneFriendlyName):
                     
                 # check the color (if supported)
     return isActive
-
-# triggerEntities = [*map(config['downstairsController']['scenes'].get, lst)]
-# triggerEntities = [*map(lambda scene: scene['entities'], config['downstairsController']['scenes'])]
-# [*map(lambda scene: scene['entities'], config['downstairsController']['scenes'])]
-
-# triggerEntities = [*map(lambda scene: 
-#     [*map(lambda entity: entity, scene['entities'])]
-#     , config['downstairsController']['scenes'])]
-
-# scene.downstairs_all_lights
-# scene.downstairs_cooking_lights
-# scene.downstairs_dining_lights
-# scene.downstairs_lounge_lights
-# scene.downstairs_all_lights_off
-
-# zwave config call
-# serviceCall={
-#     'domain': 'zwave_js',
-#     'name': 'set_config_parameter',
-#     'kwargs': {
-#         'parameter': '2',
-#         'value': '2',
-#         'entity_id': 'switch.kitchen_scene_controller'
-#     }
-# }
-# service.call(
-#     serviceCall['domain'],
-#     serviceCall['name'],
-#     **serviceCall['kwargs']
-# )
-
-# scene call
-# serviceCall={
-#     'domain': 'scene',
-#     'name': 'turn_on',
-#     'kwargs': {
-#         'entity_id': 'scene.downstairs_all_lights_off'
-#     }
-# }
-# service.call(
-#     serviceCall['domain'],
-#     serviceCall['name'],
-#     **serviceCall['kwargs']
-# )
 
 # TODO: iterate for each controller
 # makes sure the LEDs of the scene controller
