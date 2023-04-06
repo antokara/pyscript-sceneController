@@ -25,15 +25,50 @@ def var_name(name):
 #
 # Custom
 #
+
+# TODO: migrate to pyscript app config
 config={
     'downstairsController': {}
 }
+
+
+# returns either the brightness integer or
+#  None, if not supported and when the state is off
+def getBrightness(entityName):
+    try:
+        brightness=int(state.get(f'{entityName}.brightness'))
+    except:
+        brightness=None
+    return brightness
+
+
+# uses the list of scenes provided to find the sceneFriendlyName
+# and to compare its state, against the scenes
+def isSceneActive(scenes, sceneFriendlyName):
+    isActive=True
+    for scene in scenes:
+        if sceneFriendlyName==scene['name']:
+            for entityTuple in scene['entities'].items():
+                entityId=entityTuple[0]
+                entity=scene['entities'][entityId]
+                # first and foremost, check the on/off state
+                # there's no need to proceed and check other
+                # features, if that's incorrect...
+                if state.get(entityId)!=entity['state']:
+                    # on/off state
+                    isActive=False
+                if isActive and 'brightness' in entity and getBrightness(entityId) != entity['brightness']:
+                    # brightness mismatch
+                    isActive=False
+                    
+                # check the color (if supported)
+    return isActive
 
 # when the scenes change and reload
 # we also need to reload their config file
 # in order to reflect their changes
 # TODO: re-register all the triggers based on their entities
-@event_trigger('SCENE_RELOADED')
+@event_trigger('scene_reloaded')
 def loadConfig():
     logMsg(message='loading config...')
 
@@ -98,7 +133,6 @@ def loadConfig():
         ]
     }
 
-
     # TODO: iterate each controller...
     # grab the unique trigger entities from all the scenes we have
     # as well as any supported attributes they may have
@@ -117,38 +151,7 @@ def loadConfig():
 
 loadConfig()
 
-# returns either the brightness integer or
-#  None, if not supported and when the state is off
-def getBrightness(entityName):
-    try:
-        brightness=int(state.get(f'{entityName}.brightness'))
-    except:
-        brightness=None
-    return brightness
-
-
-# uses the list of scenes provided to find the sceneFriendlyName
-# and to compare its state, against the scenes
-def isSceneActive(scenes, sceneFriendlyName):
-    isActive=True
-    for scene in scenes:
-        if sceneFriendlyName==scene['name']:
-            for entityTuple in scene['entities'].items():
-                entityId=entityTuple[0]
-                entity=scene['entities'][entityId]
-                # first and foremost, check the on/off state
-                # there's no need to proceed and check other
-                # features, if that's incorrect...
-                if state.get(entityId)!=entity['state']:
-                    # on/off state
-                    isActive=False
-                if isActive and 'brightness' in entity and getBrightness(entityId) != entity['brightness']:
-                    # brightness mismatch
-                    isActive=False
-                    
-                # check the color (if supported)
-    return isActive
-
+# TODO: move into a trigger closure and trigger from loadConfig
 # TODO: iterate for each controller
 # makes sure the LEDs of the scene controller
 # are turned on/off appropriately
