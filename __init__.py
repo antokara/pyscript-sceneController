@@ -146,39 +146,42 @@ def loadConfig():
             # for simple state, add the entity
             if entity[0] not in config['downstairsController']['triggerEntities']:
                 config['downstairsController']['triggerEntities'].append(entity[0])
-                
+    
+    # TODO: iterate for each controller
+    # makes sure the LEDs of the scene controller
+    # are turned on/off appropriately
+    @state_trigger(config['downstairsController']['triggerEntities'])
+    @time_trigger('once(now)')
+    def controllerLeds():
+        # TODO: consider simultaneous scene changes in different room.
+        # change unique ID to be per controller ID
+        task.unique('sceneController_leds', kill_me=True)
+        for button in config['downstairsController']['buttons']:
+            # find if the scene is currently on/off
+            if isSceneActive(scenes=config['downstairsController']['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
+                # turn the LED on
+                service.call(
+                    'zwave_js',
+                    'set_config_parameter',
+                    parameter=button['ledParameter'],
+                    value='2',
+                    entity_id='switch.kitchen_scene_controller'
+                )
+            else:
+                # turn the LED off 
+                service.call(
+                    'zwave_js',
+                    'set_config_parameter',
+                    parameter=button['ledParameter'],
+                    value='3',
+                    entity_id='switch.kitchen_scene_controller'
+                )
+
     logMsg(message='config loaded!')
+    return controllerLeds
 
-loadConfig()
-
-# TODO: move into a trigger closure and trigger from loadConfig
-# TODO: iterate for each controller
-# makes sure the LEDs of the scene controller
-# are turned on/off appropriately
-@state_trigger(config['downstairsController']['triggerEntities'])
-@time_trigger('once(now)')
-def controllerLeds():
-    task.unique('sceneController_leds', kill_me=True)
-    for button in config['downstairsController']['buttons']:
-        # find if the scene is currently on/off
-        if isSceneActive(scenes=config['downstairsController']['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
-            # turn the LED on
-            service.call(
-                'zwave_js',
-                'set_config_parameter',
-                parameter=button['ledParameter'],
-                value='2',
-                entity_id='switch.kitchen_scene_controller'
-            )
-        else:
-            # turn the LED off 
-            service.call(
-                'zwave_js',
-                'set_config_parameter',
-                parameter=button['ledParameter'],
-                value='3',
-                entity_id='switch.kitchen_scene_controller'
-            )
+# keep the closure trigger(s)
+triggers=loadConfig()
 
 # TODO: iterate for each controller
 # handles the scene controller button clicks,
