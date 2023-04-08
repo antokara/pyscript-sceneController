@@ -26,11 +26,8 @@ def var_name(name):
 # Custom
 #
 
-# TODO: migrate to pyscript app config
-config={
-    'downstairsController': {}
-}
-
+# pull the app config
+config=pyscript.app_config['controllers']
 
 # returns either the brightness integer or
 #  None, if not supported and when the state is off
