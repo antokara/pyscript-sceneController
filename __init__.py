@@ -43,18 +43,16 @@ def getBrightness(entityName):
 # and to compare its state, against the scenes
 def isSceneActive(scenes, sceneFriendlyName):
     isActive=True
-    for scene in scenes.items():
-        if sceneFriendlyName==scene[0]:
-            for entityTuple in scene[1]['entities'].items():
-                entityId=entityTuple[0]
-                entity=scene[1]['entities'][entityId]
+    for sceneName, sceneConfig in scenes.items():
+        if sceneFriendlyName==sceneName:
+            for entityId, entityConfig in sceneConfig['entities'].items():
                 # first and foremost, check the on/off state
                 # there's no need to proceed and check other
                 # features, if that's incorrect...
-                if state.get(entityId)!=entity['state']:
+                if state.get(entityId)!=entityConfig['state']:
                     # on/off state
                     isActive=False
-                if isActive and 'brightness' in entity and getBrightness(entityId) != entity['brightness']:
+                if isActive and 'brightness' in entityConfig and getBrightness(entityId) != entityConfig['brightness']:
                     # brightness mismatch
                     isActive=False
                     
@@ -84,16 +82,16 @@ def loadConfig():
     # grab the unique trigger entities from all the scenes we have
     # as well as any supported attributes they may have
     config['downstairsController']['triggerEntities']=[]
-    for scene in config['downstairsController']['scenes'].items():
+    for sceneName, sceneConfig in config['downstairsController']['scenes'].items():
         # add the triggerEntities for this scene
-        for entity in scene[1]['entities'].items():
+        for entityName, entityConfig in sceneConfig['entities'].items():
             # in case this entity has brightness, which we support
             # add it as a trigger
-            if 'brightness' in entity[1] and f'{entity[0]}.brightness' not in config['downstairsController']['triggerEntities']:
-                config['downstairsController']['triggerEntities'].append(f'{entity[0]}.brightness')
+            if 'brightness' in entityConfig and f'{entityName}.brightness' not in config['downstairsController']['triggerEntities']:
+                config['downstairsController']['triggerEntities'].append(f'{entityName}.brightness')
             # for simple state, add the entity
-            if entity[0] not in config['downstairsController']['triggerEntities']:
-                config['downstairsController']['triggerEntities'].append(entity[0])
+            if entityName not in config['downstairsController']['triggerEntities']:
+                config['downstairsController']['triggerEntities'].append(entityName)
     
     # TODO: iterate for each controller
     # makes sure the LEDs of the scene controller
