@@ -43,11 +43,11 @@ def getBrightness(entityName):
 # and to compare its state, against the scenes
 def isSceneActive(scenes, sceneFriendlyName):
     isActive=True
-    for scene in scenes:
-        if sceneFriendlyName==scene['name']:
-            for entityTuple in scene['entities'].items():
+    for scene in scenes.items():
+        if sceneFriendlyName==scene[0]:
+            for entityTuple in scene[1]['entities'].items():
                 entityId=entityTuple[0]
-                entity=scene['entities'][entityId]
+                entity=scene[1]['entities'][entityId]
                 # first and foremost, check the on/off state
                 # there's no need to proceed and check other
                 # features, if that's incorrect...
@@ -72,70 +72,21 @@ def loadConfig():
     # load all the scenes configurations
     # because it is the only way to get the state of each entity, in each scene
     # otherwise, we only get the list of entities of a scene...
-    # TODO: reload somehow on change and update everything. make it a function
-    # that gets called at init and on change with trigger from scenes Create/Update/Delete
     with open('/config/scenes.yaml', 'r') as file:
-        scenes = yaml.safe_load(file)
+        scenesConfig = yaml.safe_load(file)
 
-    config['downstairsController'] = {
-        # the z-wave scene controller, node_id
-        # that triggers the scene changes
-        'nodeId': 78,
-        # the entities (lights, switches, etc.)
-        # that are involved in the scenes and should
-        # cause the trigger of scene controller LEDs to change
-        'triggerEntities':[],
-        # the configuration of the filtered scenes
-        'scenes': [scene for scene in scenes if scene['name'] in [
-            # the names of the scenes, case-sensitive
-            # not their ids or entity ids
-            'Downstairs - all lights',
-            'Downstairs - cooking lights',
-            'Downstairs - dining lights',
-            'Downstairs - lounge lights',
-        ]],
-        'offScene': 'scene.downstairs_all_lights_off',
-        # which buttons on the controller,
-        # should trigger a scene activation
-        'buttons':[
-            {
-                # the identifier used in events of type:
-                # zwave_js_value_notification
-                # to know which event/button, does what
-                'label': 'Scene 001',
-                # the zwave parameter for the LED of the scene button
-                'ledParameter': '2',
-                # the name part of the entity id, of the scene to apply
-                'scene': 'downstairs_cooking_lights',
-                'sceneFriendlyName': 'Downstairs - cooking lights',
-            },
-            {
-                'label': 'Scene 002',
-                'ledParameter': '3',
-                'scene': 'downstairs_dining_lights',
-                'sceneFriendlyName': 'Downstairs - dining lights',
-            },
-            {
-                'label': 'Scene 003',
-                'ledParameter': '4',
-                'scene': 'downstairs_lounge_lights',
-                'sceneFriendlyName': 'Downstairs - lounge lights',
-            },
-            {
-                'label': 'Scene 004',
-                'ledParameter': '5',
-                'scene': 'downstairs_all_lights',
-                'sceneFriendlyName': 'Downstairs - all lights',
-            }
-        ]
-    }
+    # TODO: iterate each controller... 
+    # grab the scene config, of each scene, using its name
+    for sceneName in config['downstairsController']['scenes']:
+        config['downstairsController']['scenes'][sceneName]=[sceneConfigItem for sceneConfigItem in scenesConfig if sceneConfigItem['name'] == sceneName][0]
 
-    # TODO: iterate each controller...
+    # TODO: iterate each controller...  
     # grab the unique trigger entities from all the scenes we have
     # as well as any supported attributes they may have
     config['downstairsController']['triggerEntities']=[]
-    for scene in config['downstairsController']['scenes']:
-        for entity in scene['entities'].items():
+    for scene in config['downstairsController']['scenes'].items():
+        # add the triggerEntities for this scene
+        for entity in scene[1]['entities'].items():
             # in case this entity has brightness, which we support
             # add it as a trigger
             if 'brightness' in entity[1] and f'{entity[0]}.brightness' not in config['downstairsController']['triggerEntities']:
