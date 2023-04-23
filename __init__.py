@@ -101,7 +101,6 @@ def loadScenesConfig():
         @state_trigger(controllerConfig['triggerEntities'])
         @time_trigger('once(now)')
         def controllerLeds():
-            # TODO: consider simultaneous scene changes in different room.
             # change unique ID to be per controller ID
             task.unique(f'sceneController_leds__{controllerName}', kill_me=True)
             for button in controllerConfig['buttons']:
@@ -113,7 +112,7 @@ def loadScenesConfig():
                         'set_config_parameter',
                         parameter=button['ledParameter'],
                         value='2',
-                        entity_id='switch.kitchen_scene_controller'
+                        entity_id=controllerConfig['entityId']
                     )
                 else:
                     # turn the LED off 
@@ -122,7 +121,7 @@ def loadScenesConfig():
                         'set_config_parameter',
                         parameter=button['ledParameter'],
                         value='3',
-                        entity_id='switch.kitchen_scene_controller'
+                        entity_id=controllerConfig['entityId']
                     )
 
         # add the closure to the list

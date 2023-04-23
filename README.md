@@ -26,13 +26,12 @@ apps:
         # the z-wave scene controller, node_id
         # that triggers the scene changes
         nodeId: 78
-        # the entities (lights, switches, etc.)
-        # that are involved in the scenes and should
-        # cause the trigger of scene controller LEDs to change
-        triggerEntities:
+        # the entity Id of the scene controller
+        entityId: "switch.kitchen_scene_controller"
         # the names of the scenes, case-sensitive
         # not their ids or entity ids
         # @see config/scenes.yaml (name prop)
+        # TODO: remove and take them from the buttons;
         scenes:
           "Downstairs - all lights":
           "Downstairs - cooking lights":
@@ -55,9 +54,11 @@ apps:
             # the zwave parameter for the LED of the scene button
             ledParameter: 2
             # the name part of the entity id, of the scene to apply
-            # TODO: translate the sceneFriendlyName to this, to avoid redundant config
             scene: downstairs_cooking_lights
             # the name, as-is in the config/scenes.yaml (name prop)
+            # note: scene entity ids can differ from their names
+            #       hence, we need to specify both
+            # TODO: see if scene ID can be used to map instead
             sceneFriendlyName: "Downstairs - cooking lights"
           - two:
             label: "Scene 002"
