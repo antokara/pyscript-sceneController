@@ -2,7 +2,7 @@
 
 A home assistant pyscript for scene controllers.
 
-It allows you to configure easily, a z-wave (for now) scene controller and map its buttons, to different home assistant scenes. When clicking any of the mapped buttons, if the scene is not active, it actives it and turns off the button's LED. If the scene is already active, it activates a specific scene, that resets all the scenes (e.g. turn off all the lights or whatever state you prefer).
+It allows you to configure easily, a z-wave (for now) scene controller and map its buttons, to different home assistant scenes. When clicking any of the mapped buttons, if the scene is not active, it activates it and turns off the button's LED. If the scene is already active, it activates a specific scene, that resets all the scenes (e.g. turn off all the lights or whatever state you prefer).
 
 It automatically keeps the LEDs of the scene controller's buttons in sync with all the mapped scenes. Meaning, if a scene gets activated/deactivated by action(s) outside of the scene controller, it will immediatelly pickup the change and toggle the LEDs appropriately.
 
