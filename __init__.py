@@ -132,11 +132,7 @@ def loadScenesConfig():
 # perform the initial scene config load
 loadScenesConfig()
 
-# keep a list of the controller buttons trigger closures
-controllerButtonsTriggers=[]
-
-# iterate each controller... 
-for controllerName, controllerConfig in pyscript.app_config['controllers'].items():
+def controllerButtonsTriggerFactory(controllerName, controllerConfig):
     # handles the scene controller button clicks,
     # for the zwave node_id provided
     # to turn on the proper scene
@@ -145,6 +141,8 @@ for controllerName, controllerConfig in pyscript.app_config['controllers'].items
         task.unique(f'sceneController_buttons__{controllerName}', kill_me=True)
         for button in controllerConfig['buttons']:
             if button['label']==kwargs['label']:
+                a=button['sceneFriendlyName']
+                logMsg(message=f'scene controller: {controllerName} handling scene: {a}')
                 # find if the scene is currently on/off
                 if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
                     # turn the scene off
@@ -160,8 +158,12 @@ for controllerName, controllerConfig in pyscript.app_config['controllers'].items
                         'turn_on',
                         entity_id=f"scene.{button['scene']}"
                     )
-    # add the closure to the list
-    controllerButtonsTriggers.append(controllerButtons)
+    return controllerButtons
+
+# build the triggers for each controller
+controllerButtonsTriggers=[]
+for controllerName, controllerConfig in pyscript.app_config['controllers'].items():
+    controllerButtonsTriggers.append(controllerButtonsTriggerFactory(controllerName=controllerName, controllerConfig=controllerConfig))
 
 # status
 logMsg(message='loaded!')
