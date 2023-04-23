@@ -56,13 +56,42 @@ def isSceneActive(scenes, sceneFriendlyName):
                 # check the color (if supported)
     return isActive
 
+def controllerLedsTriggerFactory(controllerName, controllerConfig):
+    # makes sure the LEDs of the scene controller
+    # are turned on/off appropriately
+    @state_trigger(controllerConfig['triggerEntities'])
+    @time_trigger('once(now)')
+    def controllerLeds():
+        # change unique ID to be per controller ID
+        task.unique(f'sceneController_leds__{controllerName}', kill_me=True)
+        for button in controllerConfig['buttons']:
+            # find if the scene is currently on/off
+            if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
+                # turn the LED on
+                service.call(
+                    'zwave_js',
+                    'set_config_parameter',
+                    parameter=button['ledParameter'],
+                    value='2',
+                    entity_id=controllerConfig['entityId']
+                )
+            else:
+                # turn the LED off 
+                service.call(
+                    'zwave_js',
+                    'set_config_parameter',
+                    parameter=button['ledParameter'],
+                    value='3',
+                    entity_id=controllerConfig['entityId']
+                )
+    return controllerLeds
+
 # keep a list of the controller led trigger closures
 controllerLedsTriggers=[]
 
 # when the scenes change and reload
 # we also need to reload their config file
 # in order to reflect their changes
-# TODO: re-register all the triggers based on their entities
 @event_trigger('scene_reloaded')
 def loadScenesConfig():
     logMsg(message='loading config...')
@@ -95,37 +124,9 @@ def loadScenesConfig():
                 # for simple state, add the entity
                 if entityName not in controllerConfig['triggerEntities']:
                     controllerConfig['triggerEntities'].append(entityName)
-        
-        # makes sure the LEDs of the scene controller
-        # are turned on/off appropriately
-        @state_trigger(controllerConfig['triggerEntities'])
-        @time_trigger('once(now)')
-        def controllerLeds():
-            # change unique ID to be per controller ID
-            task.unique(f'sceneController_leds__{controllerName}', kill_me=True)
-            for button in controllerConfig['buttons']:
-                # find if the scene is currently on/off
-                if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
-                    # turn the LED on
-                    service.call(
-                        'zwave_js',
-                        'set_config_parameter',
-                        parameter=button['ledParameter'],
-                        value='2',
-                        entity_id=controllerConfig['entityId']
-                    )
-                else:
-                    # turn the LED off 
-                    service.call(
-                        'zwave_js',
-                        'set_config_parameter',
-                        parameter=button['ledParameter'],
-                        value='3',
-                        entity_id=controllerConfig['entityId']
-                    )
 
         # add the closure to the list
-        controllerLedsTriggers.append(controllerLeds)
+        controllerLedsTriggers.append(controllerLedsTriggerFactory(controllerName=controllerName, controllerConfig=controllerConfig))
 
     logMsg(message='config loaded!')
 
@@ -141,8 +142,6 @@ def controllerButtonsTriggerFactory(controllerName, controllerConfig):
         task.unique(f'sceneController_buttons__{controllerName}', kill_me=True)
         for button in controllerConfig['buttons']:
             if button['label']==kwargs['label']:
-                a=button['sceneFriendlyName']
-                logMsg(message=f'scene controller: {controllerName} handling scene: {a}')
                 # find if the scene is currently on/off
                 if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
                     # turn the scene off
