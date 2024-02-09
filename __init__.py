@@ -47,7 +47,7 @@ def isSceneActive(scenes, sceneFriendlyName):
                 # there's no need to proceed and check other
                 # features, if that's incorrect...
                 if state.get(entityId)!=entityConfig['state']:
-                    # on/off state
+                    # on/off state mismatch
                     isActive=False
                 if isActive and 'brightness' in entityConfig and getBrightness(entityId) != entityConfig['brightness']:
                     # brightness mismatch
@@ -64,14 +64,28 @@ def controllerLedsTriggerFactory(controllerName, controllerConfig):
     def controllerLeds():
         # change unique ID to be per controller ID
         task.unique(f'sceneController_leds__{controllerName}', kill_me=True)
-        for button in controllerConfig['buttons']:
+
+        # create the list of Leds
+        leds={}
+        for buttonIndex, button in enumerate(controllerConfig['buttons']):
+            leds[button['ledParameter']]=False
+
+        # turn on leds and only turn off those that are not already on
+        for buttonIndex, button in enumerate(controllerConfig['buttons']):
             # find if the scene is currently on/off
             if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
+                leds[button['ledParameter']]=True
+            elif leds[button['ledParameter']]!=True:
+                leds[button['ledParameter']]=False
+            
+        # go through the leds list and actually turn them on/off
+        for ledParameter, ledOn in leds.items():
+            if ledOn==True:
                 # turn the LED on
                 service.call(
                     'zwave_js',
                     'set_config_parameter',
-                    parameter=button['ledParameter'],
+                    parameter=ledParameter, 
                     value='2',
                     entity_id=controllerConfig['entityId']
                 )
@@ -80,7 +94,7 @@ def controllerLedsTriggerFactory(controllerName, controllerConfig):
                 service.call(
                     'zwave_js',
                     'set_config_parameter',
-                    parameter=button['ledParameter'],
+                    parameter=ledParameter,
                     value='3',
                     entity_id=controllerConfig['entityId']
                 )
@@ -141,7 +155,8 @@ def controllerButtonsTriggerFactory(controllerName, controllerConfig):
     def controllerButtons(**kwargs):
         task.unique(f'sceneController_buttons__{controllerName}', kill_me=True)
         for button in controllerConfig['buttons']:
-            if button['label']==kwargs['label']:
+            # logMsg(f'controllerButtons {kwargs}')
+            if button['label']==kwargs['label'] and kwargs['value']==button['value']:
                 # find if the scene is currently on/off
                 if isSceneActive(scenes=controllerConfig['scenes'], sceneFriendlyName=button['sceneFriendlyName']):
                     # turn the scene off
